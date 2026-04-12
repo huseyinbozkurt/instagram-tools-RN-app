@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "Instagram Tools",
+    "slug": "instagram-tools",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "backgroundColor": "#0f0f0f"
+    },
+    "scheme": "instagram-tools",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.huseyinbozkuurt.instagramtools",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Needed to save downloaded Instagram media to your library.",
+        "NSPhotoLibraryAddUsageDescription": "Needed to save downloaded Instagram media to your library."
+      }
+    },
+    "android": {
+      "package": "com.huseyinbozkuurt.instagramtools",
+      "adaptiveIcon": {
+        "backgroundColor": "#0f0f0f"
+      },
+      "permissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow Instagram Tools to save media to your photo library.",
+          "savePhotosPermission": "Allow Instagram Tools to save photos and videos.",
+          "isAccessMediaLocationEnabled": true
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "16.0",
+            "extraPods": []
+          }
+        }
+      ],
+      "./plugins/xcode26-fmt-fix"
+    ]
+  }
+}
