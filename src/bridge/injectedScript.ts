@@ -1,34 +1,11 @@
 // Injected into the instagram.com WebView on every page load.
-// Installs window.__RNBridge for RN to call via injectJavaScript.
+// Handles auth detection; bridge calls are injected inline by WebViewBridge.
 // RULES: Must end with `true` at outer scope or iOS silently skips injection.
 
 export const BRIDGE_INIT_SCRIPT = `
 (function() {
   if (window.__RNBridgeInstalled) { reportAuth(); return; }
   window.__RNBridgeInstalled = true;
-
-  window.__RNBridge = {
-    execute: function(requestId, code) {
-      Promise.resolve()
-        .then(function() { return eval(code); })
-        .then(function(result) {
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'bridge_result',
-            requestId: requestId,
-            payload: result,
-            error: null,
-          }));
-        })
-        .catch(function(err) {
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'bridge_result',
-            requestId: requestId,
-            payload: null,
-            error: err && err.message ? err.message : String(err),
-          }));
-        });
-    }
-  };
 
   function reportAuth() {
     var dsMatch = document.cookie.match(/ds_user_id=(\\d+)/);

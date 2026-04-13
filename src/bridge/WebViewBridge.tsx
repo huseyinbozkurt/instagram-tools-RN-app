@@ -6,7 +6,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { AppState, StyleSheet } from 'react-native';
+import { AppState, StyleSheet, View } from 'react-native';
 import WebView, { WebViewMessageEvent } from 'react-native-webview';
 import { BRIDGE_INIT_SCRIPT } from './injectedScript';
 
@@ -119,7 +119,8 @@ export function WebViewBridgeProvider({ children }: { children: React.ReactNode 
       }, 30_000);
       pending.current.set(id, { resolve, reject, timer });
 
-      const injection = `window.__RNBridge && window.__RNBridge.execute(${JSON.stringify(id)}, ${JSON.stringify(jsCode)}); true;`;
+      const code = jsCode.trim();
+      const injection = `(function(){var __rid=${JSON.stringify(id)};Promise.resolve().then(function(){return(${code})}).then(function(r){window.ReactNativeWebView.postMessage(JSON.stringify({type:'bridge_result',requestId:__rid,payload:r,error:null}))}).catch(function(e){window.ReactNativeWebView.postMessage(JSON.stringify({type:'bridge_result',requestId:__rid,payload:null,error:e&&e.message?e.message:String(e)}))})})();true;`;
       const dispatch = () => webViewRef.current?.injectJavaScript(injection);
       if (ready.current) dispatch();
       else queue.current.push(dispatch);
@@ -130,27 +131,39 @@ export function WebViewBridgeProvider({ children }: { children: React.ReactNode 
 
   return (
     <BridgeContext.Provider value={{ call, isLoggedIn, userId, showLogin }}>
-      <WebView
-        ref={webViewRef}
-        source={{ uri: 'https://www.instagram.com/' }}
-        style={fullScreen ? StyleSheet.absoluteFillObject : styles.hidden}
-        pointerEvents={fullScreen ? 'auto' : 'none'}
-        injectedJavaScript={BRIDGE_INIT_SCRIPT}
-        onMessage={handleMessage}
-        onLoadEnd={handleLoadEnd}
-        onNavigationStateChange={handleNavChange}
-        sharedCookiesEnabled={true}
-        thirdPartyCookiesEnabled={true}
-        domStorageEnabled={true}
-        javaScriptEnabled={true}
-        userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
-      />
-      {children}
+      <View style={styles.container}>
+        {children}
+        <View style={fullScreen ? styles.fullScreen : styles.hidden} pointerEvents={fullScreen ? 'auto' : 'none'}>
+          <WebView
+            ref={webViewRef}
+            source={{ uri: 'https://www.instagram.com/' }}
+            style={styles.flex}
+            injectedJavaScript={BRIDGE_INIT_SCRIPT}
+            onMessage={handleMessage}
+            onLoadEnd={handleLoadEnd}
+            onNavigationStateChange={handleNavChange}
+            sharedCookiesEnabled={true}
+            thirdPartyCookiesEnabled={true}
+            domStorageEnabled={true}
+            javaScriptEnabled={true}
+            userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+          />
+        </View>
+      </View>
     </BridgeContext.Provider>
   );
 }
 
 const styles = StyleSheet.create({
+  container: { flex: 1 },
+  flex: { flex: 1 },
+  fullScreen: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
   // Off-screen but 1x1px — MUST have non-zero size or WKWebView on iOS freezes JS
   hidden: {
     position: 'absolute',

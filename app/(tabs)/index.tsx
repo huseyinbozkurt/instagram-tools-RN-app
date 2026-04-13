@@ -16,7 +16,7 @@ import type { NonFollower } from '../../src/instagram/types';
 
 export default function UnfollowersScreen() {
   const bridge = useBridge();
-  const { status, progress, results, stats, error, start, cancel, reset } = useUnfollowerCheck();
+  const { status, progress, results, stats, checkedAt, error, start, cancel, reset } = useUnfollowerCheck();
   const [filter, setFilter] = useState('');
 
   const filtered = filter.trim()
@@ -74,6 +74,9 @@ export default function UnfollowersScreen() {
           <Stat label="Followers" value={stats.followers} />
           <Stat label="Not back" value={results.length} highlight />
         </View>
+        {checkedAt && (
+          <Text style={styles.checkedAt}>Last checked: {new Date(checkedAt).toLocaleString()}</Text>
+        )}
         <TextInput
           style={styles.search}
           value={filter}
@@ -132,6 +135,7 @@ const styles = StyleSheet.create({
   progressText: { color: '#f0f0f0', fontSize: 15, marginTop: 16, textAlign: 'center' },
   hint: { color: '#555', fontSize: 12, marginTop: 6 },
   errorText: { color: '#e05a5a', fontSize: 14, textAlign: 'center', marginBottom: 24, lineHeight: 20 },
+  checkedAt: { color: '#555', fontSize: 11, textAlign: 'center', marginBottom: 4 },
   statsRow: { flexDirection: 'row', gap: 8, padding: 16 },
   stat: { flex: 1, backgroundColor: '#1a1a1a', borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: '#2a2a2a' },
   statHl: { borderColor: '#dc2743', backgroundColor: '#1f0d10' },

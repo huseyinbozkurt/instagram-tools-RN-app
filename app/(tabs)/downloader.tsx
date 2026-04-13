@@ -108,6 +108,9 @@ export default function DownloaderScreen() {
                 {' '}Save {selected.size} {selected.size === 1 ? 'Item' : 'Items'}
               </Text>
             </TouchableOpacity>
+            <TouchableOpacity style={styles.cancelBtn} onPress={reset}>
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
           </View>
         )}
       </SafeAreaView>
@@ -120,8 +123,8 @@ export default function DownloaderScreen() {
       <Ionicons name="cloud-download-outline" size={56} color="#333" />
       <Text style={styles.title}>Download Media</Text>
       <Text style={styles.body}>
-        Copy an Instagram post, reel, or video link, then tap the button below.
-        For carousel posts you can pick which items to save.
+        Copy an Instagram post, reel, story, or highlight link, then tap the button below.
+        For carousels and highlights you can pick which items to save.
       </Text>
       {error ? <Text style={{ color: '#e05a5a', fontSize: 13, marginBottom: 16, textAlign: 'center' }}>{error}</Text> : null}
       <TouchableOpacity style={styles.btn} onPress={readClipboard}>
@@ -144,4 +147,6 @@ const styles = StyleSheet.create({
   btn: { backgroundColor: '#dc2743', borderRadius: 12, paddingVertical: 14, paddingHorizontal: 32, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', minWidth: 180 },
   btnFull: { width: '100%', paddingHorizontal: 0 },
   btnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  cancelBtn: { alignItems: 'center', paddingVertical: 12, marginTop: 4 },
+  cancelText: { color: '#666', fontWeight: '600', fontSize: 14 },
 });

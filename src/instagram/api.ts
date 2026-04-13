@@ -34,6 +34,33 @@ export async function fetchPage(
   }>;
 }
 
+export async function getCookies(bridge: BridgeContextValue): Promise<string> {
+  return bridge.call('document.cookie') as Promise<string>;
+}
+
+export async function fetchBlobBase64(
+  bridge: BridgeContextValue,
+  url: string,
+): Promise<string> {
+  const code = `
+(async function() {
+  var res = await fetch(${JSON.stringify(url)}, {
+    credentials: 'include',
+    headers: { 'referer': 'https://www.instagram.com/' },
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  var blob = await res.blob();
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onloadend = function() { resolve(reader.result.split(',')[1]); };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+})()
+`;
+  return bridge.call(code) as Promise<string>;
+}
+
 export async function fetchMediaInfo(
   bridge: BridgeContextValue,
   mediaId: string,
@@ -45,4 +72,17 @@ export async function fetchMediaInfo(
   const item = data?.items?.[0];
   if (!item) throw new Error('No media found for this link');
   return item;
+}
+
+export async function fetchHighlightItems(
+  bridge: BridgeContextValue,
+  highlightId: string,
+) {
+  const url = `https://www.instagram.com/api/v1/feed/reels_media/?reel_ids=highlight%3A${highlightId}`;
+  const data = (await bridge.call(buildFetchCode(url))) as {
+    reels: Record<string, { items: import('./types').IGMediaItem[] }>;
+  };
+  const reel = data?.reels?.[`highlight:${highlightId}`];
+  if (!reel?.items?.length) throw new Error('No items found in this highlight');
+  return reel.items;
 }
