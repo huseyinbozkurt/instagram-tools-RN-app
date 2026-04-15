@@ -99,8 +99,8 @@ src/
 
 ```bash
 # Clone the repository
-git clone https://github.com/huseyinbozkuurt/instagram-toola-app.git
-cd instagram-toola-app
+git clone https://github.com/huseyinbozkuurt/instagram-tools-RN-app.git
+cd instagram-tools-RN-app
 
 # Install dependencies
 yarn install
