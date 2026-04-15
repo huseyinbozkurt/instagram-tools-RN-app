@@ -49,7 +49,8 @@
           }
         }
       ],
-      "./plugins/xcode26-fmt-fix"
+      "./plugins/xcode26-fmt-fix",
+      "expo-video"
     ]
   }
 }

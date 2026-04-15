@@ -26,9 +26,20 @@ export function shortcodeToMediaId(shortcode: string): string {
 }
 
 export function parseInstagramUrl(url: string): ParsedUrl | null {
-  // Highlight: instagram.com/stories/highlights/123456789/
+  // Highlight (web): instagram.com/stories/highlights/123456789/
   const hlMatch = url.match(/instagram\.com\/stories\/highlights\/(\d+)/);
   if (hlMatch) return { type: 'highlight', highlightId: hlMatch[1] };
+
+  // Highlight (app share): instagram.com/s/aGlnaGxpZ2h0OjE4MDY0...
+  // The path segment is a base64url-encoded string like "highlight:18064..."
+  const shortLinkMatch = url.match(/instagram\.com\/s\/([A-Za-z0-9_-]+)/);
+  if (shortLinkMatch) {
+    try {
+      const decoded = atob(shortLinkMatch[1].replace(/-/g, '+').replace(/_/g, '/'));
+      const hlId = decoded.match(/^highlight:(\d+)$/);
+      if (hlId) return { type: 'highlight', highlightId: hlId[1] };
+    } catch { /* not a valid base64 highlight link, continue */ }
+  }
 
   // Story: instagram.com/stories/username/123456789/
   const storyMatch = url.match(/instagram\.com\/stories\/([A-Za-z0-9._]+)\/(\d+)/);

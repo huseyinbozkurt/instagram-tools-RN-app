@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { DownloadableItem } from '../instagram/types';
+import { MediaPreviewModal } from './MediaPreviewModal';
 
 const COLS = 2;
 const GAP = 10;
@@ -24,43 +25,58 @@ interface Props {
 }
 
 export function MediaSelector({ items, selected, onToggle, downloadProgress, isDownloading }: Props) {
+  const [previewIndex, setPreviewIndex] = useState(-1);
+
   return (
-    <View style={styles.grid}>
-      {items.map((item) => {
-        const on = selected.has(item.index);
-        const prog = downloadProgress[item.index];
-        const busy = isDownloading && prog !== undefined;
-        return (
-          <TouchableOpacity
-            key={`${item.id}-${item.index}`}
-            style={[styles.cell, on && styles.cellOn]}
-            onPress={() => !isDownloading && onToggle(item.index)}
-            activeOpacity={0.8}
-          >
-            <Image source={{ uri: item.thumbnailUrl }} style={styles.thumb} />
-            {item.type === 'video' && (
-              <View style={styles.vBadge}><Ionicons name="play" size={12} color="#fff" /></View>
-            )}
-            <View style={[styles.check, on && styles.checkOn]}>
-              {on && <Ionicons name="checkmark" size={14} color="#fff" />}
-            </View>
-            {busy && (
-              <View style={styles.overlay}>
-                {prog < 1 ? (
-                  <>
-                    <ActivityIndicator size="small" color="#fff" />
-                    <Text style={styles.progText}>{Math.round(prog * 100)}%</Text>
-                  </>
-                ) : (
-                  <Ionicons name="checkmark-circle" size={28} color="#4cd964" />
-                )}
+    <>
+      <View style={styles.grid}>
+        {items.map((item, idx) => {
+          const on = selected.has(item.index);
+          const prog = downloadProgress[item.index];
+          const busy = isDownloading && prog !== undefined;
+          return (
+            <TouchableOpacity
+              key={`${item.id}-${item.index}`}
+              style={[styles.cell, on && styles.cellOn]}
+              onPress={() => !isDownloading && onToggle(item.index)}
+              onLongPress={() => !isDownloading && setPreviewIndex(idx)}
+              activeOpacity={0.8}
+            >
+              <Image source={{ uri: item.thumbnailUrl }} style={styles.thumb} />
+              {item.type === 'video' && (
+                <View style={styles.vBadge}><Ionicons name="play" size={12} color="#fff" /></View>
+              )}
+              <View style={[styles.check, on && styles.checkOn]}>
+                {on && <Ionicons name="checkmark" size={14} color="#fff" />}
               </View>
-            )}
-            <Text style={styles.label} numberOfLines={1}>{item.label}</Text>
-          </TouchableOpacity>
-        );
-      })}
-    </View>
+              {busy && (
+                <View style={styles.overlay}>
+                  {prog < 1 ? (
+                    <>
+                      <ActivityIndicator size="small" color="#fff" />
+                      <Text style={styles.progText}>{Math.round(prog * 100)}%</Text>
+                    </>
+                  ) : (
+                    <Ionicons name="checkmark-circle" size={28} color="#4cd964" />
+                  )}
+                </View>
+              )}
+              <Text style={styles.label} numberOfLines={1}>{item.label}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+      {previewIndex >= 0 && (
+        <MediaPreviewModal
+          items={items}
+          selected={selected}
+          onToggle={onToggle}
+          visible
+          initialIndex={previewIndex}
+          onClose={() => setPreviewIndex(-1)}
+        />
+      )}
+    </>
   );
 }
 
