@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useBridge } from '../../src/bridge/WebViewBridge';
 import { useMediaDownload } from '../../src/hooks/useMediaDownload';
+import { useRewardedAd } from '../../src/hooks/useRewardedAd';
 import { MediaSelector } from '../../src/components/MediaSelector';
 
 export default function DownloaderScreen() {
@@ -19,6 +20,7 @@ export default function DownloaderScreen() {
     stage, items, selected, downloadProgress, error, pastedUrl,
     readClipboard, toggleSelect, download, reset,
   } = useMediaDownload();
+  const { requestWithAd } = useRewardedAd();
 
   if (bridge.isLoggedIn === false) {
     return (
@@ -100,7 +102,7 @@ export default function DownloaderScreen() {
           <View style={styles.footer}>
             <TouchableOpacity
               style={[styles.btn, styles.btnFull, selected.size === 0 && { opacity: 0.4 }]}
-              onPress={download}
+              onPress={() => requestWithAd(download)}
               disabled={selected.size === 0}
             >
               <Ionicons name="cloud-download-outline" size={18} color="#fff" />
@@ -127,7 +129,7 @@ export default function DownloaderScreen() {
         For carousels and highlights you can pick which items to save.
       </Text>
       {error ? <Text style={{ color: '#e05a5a', fontSize: 13, marginBottom: 16, textAlign: 'center' }}>{error}</Text> : null}
-      <TouchableOpacity style={styles.btn} onPress={readClipboard}>
+      <TouchableOpacity style={styles.btn} onPress={() => requestWithAd(readClipboard)}>
         <Ionicons name="clipboard-outline" size={18} color="#fff" />
         <Text style={styles.btnText}> Paste from Clipboard</Text>
       </TouchableOpacity>
