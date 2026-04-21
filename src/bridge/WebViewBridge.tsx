@@ -6,9 +6,23 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { AppState, StyleSheet, View } from 'react-native';
+import { AppState, Platform, StyleSheet, View } from 'react-native';
 import WebView, { WebViewMessageEvent } from 'react-native-webview';
 import { BRIDGE_INIT_SCRIPT } from './injectedScript';
+
+function getDeviceUserAgent(): string {
+  if (Platform.OS === 'android') {
+    const c = Platform.constants as { Release?: string; Model?: string };
+    const ver = c.Release ?? String(Platform.Version);
+    const model = (c.Model ?? 'Android').replace(/[()]/g, '');
+    return `Mozilla/5.0 (Linux; Android ${ver}; ${model}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36`;
+  }
+  const iosVer = String(Platform.Version).split('.').slice(0, 2).join('_');
+  const iosMajor = String(Platform.Version).split('.')[0];
+  return `Mozilla/5.0 (iPhone; CPU iPhone OS ${iosVer} like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/${iosMajor}.0 Mobile/15E148 Safari/604.1`;
+}
+
+const DEVICE_USER_AGENT = getDeviceUserAgent();
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -23,6 +37,7 @@ export type BridgeContextValue = {
   isLoggedIn: boolean | null;
   userId: string | null;
   showLogin: () => void;
+  forceRelogin: () => void;
 };
 
 const BridgeContext = createContext<BridgeContextValue | null>(null);
@@ -129,8 +144,25 @@ export function WebViewBridgeProvider({ children }: { children: React.ReactNode 
 
   const showLogin = useCallback(() => setFullScreen(true), []);
 
+  const forceRelogin = useCallback(() => {
+    pending.current.forEach(({ reject, timer }) => {
+      clearTimeout(timer);
+      reject(new Error('Session expired'));
+    });
+    pending.current.clear();
+    queue.current.length = 0;
+    webViewRef.current?.injectJavaScript(
+      '(function(){try{localStorage.clear();sessionStorage.clear();}catch(e){}true;})();true;'
+    );
+    ready.current = false;
+    setIsLoggedIn(false);
+    setUserId(null);
+    setFullScreen(true);
+    webViewRef.current?.reload();
+  }, []);
+
   return (
-    <BridgeContext.Provider value={{ call, isLoggedIn, userId, showLogin }}>
+    <BridgeContext.Provider value={{ call, isLoggedIn, userId, showLogin, forceRelogin }}>
       <View style={styles.container}>
         {children}
         <View style={fullScreen ? styles.fullScreen : styles.hidden} pointerEvents={fullScreen ? 'auto' : 'none'}>
@@ -146,7 +178,7 @@ export function WebViewBridgeProvider({ children }: { children: React.ReactNode 
             thirdPartyCookiesEnabled={true}
             domStorageEnabled={true}
             javaScriptEnabled={true}
-            userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+            userAgent={DEVICE_USER_AGENT}
           />
         </View>
       </View>
