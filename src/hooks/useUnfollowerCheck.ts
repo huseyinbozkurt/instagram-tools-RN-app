@@ -103,8 +103,15 @@ export function useUnfollowerCheck() {
       saveCache({ results: nonFollowers, stats: newStats, checkedAt: now });
     } catch (err: unknown) {
       if (!cancelledRef.current) {
-        setError(err instanceof Error ? err.message : 'Check failed');
-        setStatus('error');
+        const msg = err instanceof Error ? err.message : 'Check failed';
+        if (msg.includes('401')) {
+          try { if (CACHE_FILE.exists) CACHE_FILE.delete(); } catch {}
+          setStatus('idle');
+          bridge.forceRelogin();
+        } else {
+          setError(msg);
+          setStatus('error');
+        }
       }
     }
   }, [bridge]);
