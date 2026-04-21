@@ -8,6 +8,7 @@ import React, {
 } from 'react';
 import { AppState, Platform, StyleSheet, View } from 'react-native';
 import WebView, { WebViewMessageEvent } from 'react-native-webview';
+import CookieManager from '@react-native-cookies/cookies';
 import { BRIDGE_INIT_SCRIPT } from './injectedScript';
 
 function getDeviceUserAgent(): string {
@@ -151,14 +152,22 @@ export function WebViewBridgeProvider({ children }: { children: React.ReactNode 
     });
     pending.current.clear();
     queue.current.length = 0;
-    webViewRef.current?.injectJavaScript(
-      '(function(){try{localStorage.clear();sessionStorage.clear();}catch(e){}true;})();true;'
-    );
     ready.current = false;
     setIsLoggedIn(false);
     setUserId(null);
     setFullScreen(true);
-    webViewRef.current?.reload();
+
+    // Clear all cookies (including httpOnly auth cookies unreachable via JS),
+    // then wipe JS storage and reload to a clean login state.
+    // useWebKit=true targets WKWebView's cookie store on iOS.
+    CookieManager.clearAll(true)
+      .then(() =>
+        webViewRef.current?.injectJavaScript(
+          '(function(){try{localStorage.clear();sessionStorage.clear();}catch(e){}true;})();true;'
+        )
+      )
+      .catch(() => {})
+      .finally(() => webViewRef.current?.reload());
   }, []);
 
   return (
