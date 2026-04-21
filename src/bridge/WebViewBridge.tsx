@@ -8,6 +8,7 @@ import React, {
 } from 'react';
 import { AppState, Platform, StyleSheet, View } from 'react-native';
 import WebView, { WebViewMessageEvent } from 'react-native-webview';
+import CookieManager from '@react-native-cookies/cookies';
 import { BRIDGE_INIT_SCRIPT } from './injectedScript';
 
 function getDeviceUserAgent(): string {
@@ -75,6 +76,7 @@ export function WebViewBridgeProvider({ children }: { children: React.ReactNode 
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [fullScreen, setFullScreen] = useState(false);
+  const [webViewKey, setWebViewKey] = useState(0);
 
   // Re-check auth when app resumes from background
   useEffect(() => {
@@ -151,14 +153,18 @@ export function WebViewBridgeProvider({ children }: { children: React.ReactNode 
     });
     pending.current.clear();
     queue.current.length = 0;
-    webViewRef.current?.injectJavaScript(
-      '(function(){try{localStorage.clear();sessionStorage.clear();}catch(e){}true;})();true;'
-    );
     ready.current = false;
     setIsLoggedIn(false);
     setUserId(null);
     setFullScreen(true);
-    webViewRef.current?.reload();
+
+    // Clear all native cookies (httpOnly included), then remount the WebView
+    // by incrementing its key. React destroys the old instance and creates a
+    // fresh one — new JS context, new cookie store reference — so Instagram
+    // cannot re-authenticate from a stale session cookie.
+    CookieManager.clearAll(true)
+      .catch(() => {})
+      .finally(() => setWebViewKey((k) => k + 1));
   }, []);
 
   return (
@@ -167,6 +173,7 @@ export function WebViewBridgeProvider({ children }: { children: React.ReactNode 
         {children}
         <View style={fullScreen ? styles.fullScreen : styles.hidden} pointerEvents={fullScreen ? 'auto' : 'none'}>
           <WebView
+            key={webViewKey}
             ref={webViewRef}
             source={{ uri: 'https://www.instagram.com/' }}
             style={styles.flex}

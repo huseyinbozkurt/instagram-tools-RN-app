@@ -104,9 +104,14 @@ export function useUnfollowerCheck() {
     } catch (err: unknown) {
       if (!cancelledRef.current) {
         const msg = err instanceof Error ? err.message : 'Check failed';
-        if (msg.includes('401')) {
+        if (msg.includes('401') || msg.includes('403') || msg.includes('Session expired')) {
           try { if (CACHE_FILE.exists) CACHE_FILE.delete(); } catch {}
           setStatus('idle');
+          setResults([]);
+          setStats({ following: 0, followers: 0 });
+          setProgress('');
+          setError('');
+          setCheckedAt(null);
           bridge.forceRelogin();
         } else {
           setError(msg);

@@ -11,12 +11,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBridge } from '../../src/bridge/WebViewBridge';
 import { useUnfollowerCheck } from '../../src/hooks/useUnfollowerCheck';
+import { useRewardedAd } from '../../src/hooks/useRewardedAd';
 import { UserCard } from '../../src/components/UserCard';
 import type { NonFollower } from '../../src/instagram/types';
 
 export default function UnfollowersScreen() {
   const bridge = useBridge();
   const { status, progress, results, stats, checkedAt, error, start, cancel, reset } = useUnfollowerCheck();
+  const { requestWithAd } = useRewardedAd();
   const [filter, setFilter] = useState('');
 
   const filtered = filter.trim()
@@ -108,7 +110,7 @@ export default function UnfollowersScreen() {
       <Text style={styles.icon}>👥</Text>
       <Text style={styles.title}>Unfollowers Check</Text>
       <Text style={styles.body}>Find accounts you follow that don't follow you back. Requests are spaced out to avoid detection.</Text>
-      <TouchableOpacity style={styles.btn} onPress={start}>
+      <TouchableOpacity style={styles.btn} onPress={() => requestWithAd(start)}>
         <Text style={styles.btnText}>Start Check</Text>
       </TouchableOpacity>
     </SafeAreaView>

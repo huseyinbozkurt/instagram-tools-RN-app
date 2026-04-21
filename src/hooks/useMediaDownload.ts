@@ -7,6 +7,9 @@ import type { DownloadableItem } from '../instagram/types';
 
 type Stage = 'idle' | 'fetching' | 'selecting' | 'downloading' | 'done' | 'error';
 
+const isAuthError = (msg: string) =>
+  msg.includes('401') || msg.includes('403') || msg.includes('Session expired');
+
 export function useMediaDownload() {
   const bridge = useBridge();
   const [stage, setStage] = useState<Stage>('idle');
@@ -15,6 +18,15 @@ export function useMediaDownload() {
   const [downloadProgress, setDownloadProgress] = useState<Record<number, number>>({});
   const [error, setError] = useState('');
   const [pastedUrl, setPastedUrl] = useState('');
+
+  const reset = useCallback(() => {
+    setStage('idle');
+    setItems([]);
+    setSelected(new Set());
+    setDownloadProgress({});
+    setError('');
+    setPastedUrl('');
+  }, []);
 
   const readClipboard = useCallback(async () => {
     setError('');
@@ -47,10 +59,16 @@ export function useMediaDownload() {
       setSelected(new Set(downloadables.map((_, i) => i)));
       setStage('selecting');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch media info');
-      setStage('error');
+      const msg = err instanceof Error ? err.message : 'Failed to fetch media info';
+      if (isAuthError(msg)) {
+        reset();
+        bridge.forceRelogin();
+      } else {
+        setError(msg);
+        setStage('error');
+      }
     }
-  }, [bridge]);
+  }, [bridge, reset]);
 
   const toggleSelect = useCallback((index: number) => {
     setSelected((prev) => {
@@ -83,21 +101,17 @@ export function useMediaDownload() {
       }
     }
     if (failed === toDownload.length) {
-      setError(`All downloads failed: ${lastError}`);
-      setStage('error');
+      if (isAuthError(lastError)) {
+        reset();
+        bridge.forceRelogin();
+      } else {
+        setError(`All downloads failed: ${lastError}`);
+        setStage('error');
+      }
     } else {
       setStage('done');
     }
-  }, [bridge, items, selected]);
-
-  const reset = useCallback(() => {
-    setStage('idle');
-    setItems([]);
-    setSelected(new Set());
-    setDownloadProgress({});
-    setError('');
-    setPastedUrl('');
-  }, []);
+  }, [bridge, items, selected, reset]);
 
   return { stage, items, selected, downloadProgress, error, pastedUrl, readClipboard, toggleSelect, download, reset };
 }
