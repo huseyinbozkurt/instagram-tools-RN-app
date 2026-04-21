@@ -129,7 +129,7 @@ export default function DownloaderScreen() {
         For carousels and highlights you can pick which items to save.
       </Text>
       {error ? <Text style={{ color: '#e05a5a', fontSize: 13, marginBottom: 16, textAlign: 'center' }}>{error}</Text> : null}
-      <TouchableOpacity style={styles.btn} onPress={() => requestWithAd(readClipboard)}>
+      <TouchableOpacity style={styles.btn} onPress={readClipboard}>
         <Ionicons name="clipboard-outline" size={18} color="#fff" />
         <Text style={styles.btnText}> Paste from Clipboard</Text>
       </TouchableOpacity>
