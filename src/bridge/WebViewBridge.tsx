@@ -76,6 +76,7 @@ export function WebViewBridgeProvider({ children }: { children: React.ReactNode 
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [fullScreen, setFullScreen] = useState(false);
+  const [webViewKey, setWebViewKey] = useState(0);
 
   // Re-check auth when app resumes from background
   useEffect(() => {
@@ -157,17 +158,13 @@ export function WebViewBridgeProvider({ children }: { children: React.ReactNode 
     setUserId(null);
     setFullScreen(true);
 
-    // Clear all cookies (including httpOnly auth cookies unreachable via JS),
-    // then wipe JS storage and reload to a clean login state.
-    // useWebKit=true targets WKWebView's cookie store on iOS.
+    // Clear all native cookies (httpOnly included), then remount the WebView
+    // by incrementing its key. React destroys the old instance and creates a
+    // fresh one — new JS context, new cookie store reference — so Instagram
+    // cannot re-authenticate from a stale session cookie.
     CookieManager.clearAll(true)
-      .then(() =>
-        webViewRef.current?.injectJavaScript(
-          '(function(){try{localStorage.clear();sessionStorage.clear();}catch(e){}true;})();true;'
-        )
-      )
       .catch(() => {})
-      .finally(() => webViewRef.current?.reload());
+      .finally(() => setWebViewKey((k) => k + 1));
   }, []);
 
   return (
@@ -176,6 +173,7 @@ export function WebViewBridgeProvider({ children }: { children: React.ReactNode 
         {children}
         <View style={fullScreen ? styles.fullScreen : styles.hidden} pointerEvents={fullScreen ? 'auto' : 'none'}>
           <WebView
+            key={webViewKey}
             ref={webViewRef}
             source={{ uri: 'https://www.instagram.com/' }}
             style={styles.flex}
