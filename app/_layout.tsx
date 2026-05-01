@@ -5,6 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import MobileAds from 'react-native-google-mobile-ads';
 import { WebViewBridgeProvider } from '../src/bridge/WebViewBridge';
 import { adsEnabled } from '../src/ads/adsConfig';
+import { showAppOpenAdOnce } from '../src/ads/AppOpenAdManager';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -13,7 +14,11 @@ export default function RootLayout() {
     if (adsEnabled) {
       MobileAds()
         .initialize()
-        .then(() => console.log('[AdMob] SDK initialized'))
+        .then(() => {
+          console.log('[AdMob] SDK initialized');
+          // Show the App Open ad once on cold start, after SDK is ready.
+          showAppOpenAdOnce();
+        })
         .catch((err: Error) => console.error('[AdMob] Init failed:', err.message));
     } else {
       console.log('[AdMob] Ads disabled via EXPO_PUBLIC_ADS_ENABLED');

@@ -1,9 +1,18 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { View } from 'react-native';
+import { BottomTabBar } from '@react-navigation/bottom-tabs';
+import { AdBanner } from '../../src/ads/AdBanner';
 
 export default function TabLayout() {
   return (
     <Tabs
+      tabBar={(props) => (
+        <View>
+          <AdBanner />
+          <BottomTabBar {...props} />
+        </View>
+      )}
       screenOptions={{
         headerStyle: { backgroundColor: '#0f0f0f' },
         headerTintColor: '#f0f0f0',
