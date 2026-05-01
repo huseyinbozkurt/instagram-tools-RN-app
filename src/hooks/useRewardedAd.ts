@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { Alert, Platform, ToastAndroid } from 'react-native';
 import RewardedAdManager from '../ads/RewardedAdManager';
+import { adsEnabled } from '../ads/adsConfig';
 
 function showToast(message: string) {
   if (Platform.OS === 'android') {
@@ -18,19 +19,24 @@ function showToast(message: string) {
  *   <Button onPress={() => requestWithAd(startAction)} />
  */
 export function useRewardedAd() {
-  const manager = useRef(RewardedAdManager.getInstance());
+  const manager = useRef(adsEnabled ? RewardedAdManager.getInstance() : null);
 
   // Trigger preload on mount so the ad is ready when the user taps
   useEffect(() => {
-    manager.current.load();
+    manager.current?.load();
   }, []);
 
   /**
    * Shows a rewarded ad then calls onGranted on success.
    * Handles all edge cases: ad not ready, dismissed, failed.
+   * When ads are disabled via EXPO_PUBLIC_ADS_ENABLED=false, onGranted runs immediately.
    */
   const requestWithAd = useCallback((onGranted: () => void) => {
-    const mgr = manager.current;
+    if (!adsEnabled) {
+      onGranted();
+      return;
+    }
+    const mgr = manager.current!;
 
     if (!mgr.isReady) {
       // Ad hasn't loaded yet — give the user a choice
